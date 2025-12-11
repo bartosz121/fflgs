@@ -13,7 +13,7 @@ readme = "README.md"
 requires-python = ">=3.10"# only license identifier from https://spdx.org/licenses/ are allowed
 license = { text = "MIT"}
 
-keywords = ["keyword_1", "keyword_2"]
+keywords = ["feature-flags"]
 authors = [
     { name = "Bartosz Magiera", email = "admin@bartoszmagiera.dev" },
 ]
@@ -127,6 +127,7 @@ include = [
     "tests/**/*.py",
     "tests/**/*.pyi"
 ]
+exclude = ["src/fflgs/_version.py"]
 
 [tool.ruff.format]
 docstring-code-format = true
@@ -164,6 +165,7 @@ select = [
     "W",
     "YTT",
     "RUF100", # Automatically remove unused # noqa directives
+    "ASYNC",
 ]
 ignore = [
     # Allow non-abstract empty methods in abstract base classes
@@ -194,7 +196,13 @@ ban-relative-imports = "all"
 # Allow print/pprint
 "examples/*" = ["T201"]
 # Tests can use magic values, assertions, and relative imports
-"tests/**/*" = ["PLR2004", "S101", "TID252"]
+"tests/**/*" = [
+    "PLR2004",
+    "S101",
+    "TID252",
+    "PLR6301", # no self use
+    "FBT001", # boolean-typed positional argument in function definition
+    ]
 
 
 #####################
@@ -213,6 +221,7 @@ dependencies = [
     "pytest",
     "pytest-cov",
     "pytest-mock",
+    "pytest-asyncio>=1.3.0,<2",
     "vcrpy",
     "pytest-recording",
     "pytest-sugar",
@@ -280,6 +289,9 @@ build-check = [
 
 [tool.hatch.envs.hatch-test]
 template = 'default'
+dependencies = [
+    "pytest-asyncio",
+]
 
 [[tool.hatch.envs.hatch-test.matrix]]
 python = ["3.10","3.11","3.12","3.13","3.14","3.14t"]

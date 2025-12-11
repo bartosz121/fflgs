@@ -1,22 +1,44 @@
 # fflgs
 
-Feature flags
+**Feature flag evaluation** with hierarchical rule-based architecture. Sync/async, type-safe, extensible.
 
-# TODO: Create pypi project for `release` job to work:  https://docs.pypi.org/trusted-publishers/creating-a-project-through-oidc/ `Workflow name: build.yml` `Environment name: release`
+## Motivation
 
 ## Features
 
-* Feature 1
-* Feature 2
-* ...
 
 ## Development
 
-For details on setting up the development environment and contributing, see CONTRIBUTING.md.
+For detailed development setup, running tests, code quality checks, and contribution guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Credits
+## Examples
 
-This package was created with [The Hatchlor] project template.
+```python
+Rule(
+    operator="AND",
+    conditions=[
+        Condition("user.age", "GREATER_THAN", 21, True),
+        Condition("user.region", "IN", ["US", "CA"], True),
+    ],
+    active=True
+)
+```
 
-[The Hatchlor]: https://github.com/bartosz121/the-hatchlor
-[hatch]: https://hatch.pypa.io/
+```python
+Condition("user.id", "REGEX", r"^[0-4]", True)
+```
+
+```python
+RuleGroup(
+    operator="OR",
+    rules=[
+        Rule(operator="AND", conditions=[Condition("user.beta", "EQUALS", True, True)], active=True),
+        Rule(operator="AND", conditions=[Condition("user.role", "EQUALS", "admin", True)], active=True),
+    ],
+    active=True
+)
+```
+
+## License
+
+MIT - See LICENSE.txt
