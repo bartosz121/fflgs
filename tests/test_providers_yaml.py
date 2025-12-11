@@ -194,3 +194,52 @@ class TestYAMLProviderFormatSpecific:
             # Empty YAML parses as None, which should trigger validation error
             with pytest.raises(FeatureFlagsProviderError, match=r"Expected list|Failed to load"):
                 provider.get_flag("any_flag")
+
+    @pytest.mark.asyncio
+    async def test_invalid_yaml_syntax_async(self) -> None:
+        """Test YAMLProviderAsync raises FeatureFlagsProviderError for invalid YAML syntax."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False, encoding="utf-8") as f:
+            f.write("- name: test\n  description: |\n   invalid")
+            f.flush()
+            path = f.name
+
+            provider = YAMLProviderAsync(path)
+            with pytest.raises(FeatureFlagsProviderError, match=r"Invalid YAML|Failed to load"):
+                await provider.get_flag("any_flag")
+
+    @pytest.mark.asyncio
+    async def test_yaml_empty_file_async(self) -> None:
+        """Test YAMLProviderAsync with empty file."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False, encoding="utf-8") as f:
+            f.write("")
+            f.flush()
+            path = f.name
+
+            provider = YAMLProviderAsync(path)
+            with pytest.raises(FeatureFlagsProviderError, match=r"Expected list|Failed to load"):
+                await provider.get_flag("any_flag")
+
+    def test_yaml_syntax_error_exception(self) -> None:
+        """Test that yaml.YAMLError is properly caught and converted to ValueError."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False, encoding="utf-8") as f:
+            # This creates a YAML error: unmatched bracket
+            f.write("key: [unclosed")
+            f.flush()
+            path = f.name
+
+            provider = YAMLProvider(path)
+            with pytest.raises(FeatureFlagsProviderError, match="Invalid YAML"):
+                provider.get_flag("any_flag")
+
+    @pytest.mark.asyncio
+    async def test_yaml_syntax_error_exception_async(self) -> None:
+        """Test that yaml.YAMLError is properly caught and converted to ValueError (async)."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False, encoding="utf-8") as f:
+            # This creates a YAML error: unmatched bracket
+            f.write("key: [unclosed")
+            f.flush()
+            path = f.name
+
+            provider = YAMLProviderAsync(path)
+            with pytest.raises(FeatureFlagsProviderError, match="Invalid YAML"):
+                await provider.get_flag("any_flag")

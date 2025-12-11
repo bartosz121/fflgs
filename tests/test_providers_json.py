@@ -152,3 +152,27 @@ class TestJSONProviderFormatSpecific:
             provider = JSONProvider(path)
             with pytest.raises(FeatureFlagsProviderError, match="Invalid JSON"):
                 provider.get_flag("any_flag")
+
+    @pytest.mark.asyncio
+    async def test_invalid_json_syntax_async(self) -> None:
+        """Test JSONProviderAsync raises FeatureFlagsProviderError for invalid JSON syntax."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
+            f.write("{invalid json]")
+            f.flush()
+            path = f.name
+
+            provider = JSONProviderAsync(path)
+            with pytest.raises(FeatureFlagsProviderError, match="Invalid JSON"):
+                await provider.get_flag("any_flag")
+
+    @pytest.mark.asyncio
+    async def test_json_with_trailing_comma_async(self) -> None:
+        """Test JSONProviderAsync raises FeatureFlagsProviderError for JSON with trailing comma."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
+            f.write('[\n  {"name": "test"},\n]')
+            f.flush()
+            path = f.name
+
+            provider = JSONProviderAsync(path)
+            with pytest.raises(FeatureFlagsProviderError, match="Invalid JSON"):
+                await provider.get_flag("any_flag")
