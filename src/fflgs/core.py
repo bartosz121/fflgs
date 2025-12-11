@@ -215,25 +215,31 @@ def _is_bool(val: bool | None) -> TypeGuard[bool]:  # noqa: FBT001
 class Condition:
     """Represents a single condition to evaluate against context.
 
-    A condition evaluates whether a `value` matches context value using a specific operator.
+    A condition evaluates whether a `value` matches context attribute value using a specific operator.
     Conditions are inactive when `active=False`, which causes evaluate() to return None instead
     of a boolean result. Inactive conditions are filtered out during rule evaluation.
 
     Operators:
         - EQUALS/NOT_EQUALS: Direct equality/inequality comparison
         - GREATER_THAN/GREATER_THAN_OR_EQUALS/LESS_THAN/LESS_THAN_OR_EQUALS: Comparison operators.
-          Context value must be comparable (str, int, float, bool, datetime, date, time).
-        - CONTAINS/NOT_CONTAINS: Check if condition value (container) contains context value.
-          Condition value must be a container (list, str, dict, set, etc.).
-        - IN/NOT_IN: Check if context value (container) contains condition value.
-          Context value must be a container.
-        - REGEX: Pattern matching on context value using regex.
-          Both condition and context values must be strings.
+          Context attribute value must be comparable (str, int, float, bool, datetime, date, time).
+        - CONTAINS/NOT_CONTAINS: Check if value (container) contains context attribute value.
+          Value must be a container (list, str, dict, set, etc.).
+        - IN/NOT_IN: Check if context attribute value (container) contains value.
+          Context attribute value must be a container.
+        - REGEX: Pattern matching on context attribute value using regex.
+          Both value and context attribute values must be strings.
+
+    Args:
+        value: The static value to compare against the context attribute
+        operator: The comparison operator to use
+        ctx_attr: The dot-notation path to the context attribute
+        active: Whether this condition is active
     """
 
-    ctx_attr: str
-    operator: ConditionOperator
     value: ConditionValueType
+    operator: ConditionOperator
+    ctx_attr: str
     active: bool
 
     def __post_init__(self) -> None:

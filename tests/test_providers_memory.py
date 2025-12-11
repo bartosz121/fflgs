@@ -198,9 +198,9 @@ class TestInMemoryProvider:
                             operator="AND",
                             conditions=[
                                 Condition(
-                                    ctx_attr="age",
-                                    operator="GREATER_THAN",
                                     value=18,
+                                    operator="GREATER_THAN",
+                                    ctx_attr="age",
                                     active=True,
                                 )
                             ],
@@ -386,9 +386,9 @@ class TestInMemoryProviderAsync:
                             operator="AND",
                             conditions=[
                                 Condition(
-                                    ctx_attr="age",
-                                    operator="GREATER_THAN",
                                     value=18,
+                                    operator="GREATER_THAN",
+                                    ctx_attr="age",
                                     active=True,
                                 )
                             ],

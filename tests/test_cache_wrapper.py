@@ -29,7 +29,7 @@ def simple_flag() -> Flag:
                     Rule(
                         operator="AND",
                         conditions=[
-                            Condition("user.plan", "EQUALS", "pro", active=True),
+                            Condition("pro", "EQUALS", "user.plan", active=True),
                         ],
                         active=True,
                     )
@@ -894,7 +894,7 @@ class TestVersionInvalidation:
                     rules=[
                         Rule(
                             operator="AND",
-                            conditions=[Condition("user.id", "EQUALS", 1, active=True)],
+                            conditions=[Condition(1, "EQUALS", "user.id", active=True)],
                             active=True,
                         )
                     ],
@@ -915,7 +915,7 @@ class TestVersionInvalidation:
                     rules=[
                         Rule(
                             operator="AND",
-                            conditions=[Condition("user.id", "EQUALS", 2, active=True)],
+                            conditions=[Condition(2, "EQUALS", "user.id", active=True)],
                             active=True,
                         )
                     ],
@@ -975,7 +975,7 @@ class TestVersionInvalidation:
                     rules=[
                         Rule(
                             operator="AND",
-                            conditions=[Condition("user.id", "EQUALS", 1, active=True)],
+                            conditions=[Condition(1, "EQUALS", "user.id", active=True)],
                             active=True,
                         )
                     ],
@@ -996,7 +996,7 @@ class TestVersionInvalidation:
                     rules=[
                         Rule(
                             operator="AND",
-                            conditions=[Condition("user.id", "EQUALS", 2, active=True)],
+                            conditions=[Condition(2, "EQUALS", "user.id", active=True)],
                             active=True,
                         )
                     ],

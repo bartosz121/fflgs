@@ -25,7 +25,7 @@ def simple_flag() -> Flag:
                     Rule(
                         operator="AND",
                         conditions=[
-                            Condition("user.role", "EQUALS", "admin", active=True),
+                            Condition("admin", "EQUALS", "user.role", active=True),
                         ],
                         active=True,
                     ),
