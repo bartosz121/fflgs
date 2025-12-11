@@ -588,28 +588,28 @@ class TestCondition:
 
     def test_condition_evaluate_equals_true(self) -> None:
         """Test EQUALS operator evaluates to True"""
-        condition = Condition(ctx_attr="status", operator="EQUALS", value="active", active=True)
+        condition = Condition(value="active", operator="EQUALS", ctx_attr="status", active=True)
         ctx: dict[str, Any] = {"status": "active"}
         assert condition.evaluate(ctx=ctx) is True
 
     def test_condition_evaluate_equals_false(self) -> None:
         """Test EQUALS operator evaluates to False"""
-        condition = Condition(ctx_attr="status", operator="EQUALS", value="active", active=True)
+        condition = Condition(value="active", operator="EQUALS", ctx_attr="status", active=True)
         ctx: dict[str, Any] = {"status": "inactive"}
         assert condition.evaluate(ctx=ctx) is False
 
     def test_condition_evaluate_greater_than(self) -> None:
         """Test GREATER_THAN operator"""
-        condition = Condition(ctx_attr="age", operator="GREATER_THAN", value=25, active=True)
+        condition = Condition(value=25, operator="GREATER_THAN", ctx_attr="age", active=True)
         assert condition.evaluate(ctx={"age": 18}) is True
         assert condition.evaluate(ctx={"age": 30}) is False
 
     def test_condition_evaluate_less_than_or_equals(self) -> None:
         """Test LESS_THAN_OR_EQUALS operator"""
         condition = Condition(
-            ctx_attr="score",
-            operator="LESS_THAN_OR_EQUALS",
             value=100,
+            operator="LESS_THAN_OR_EQUALS",
+            ctx_attr="score",
             active=True,
         )
         assert condition.evaluate(ctx={"score": 100}) is True
@@ -619,9 +619,9 @@ class TestCondition:
     def test_condition_evaluate_in(self) -> None:
         """Test IN operator"""
         condition = Condition(
-            ctx_attr="role",
-            operator="IN",
             value="admin",
+            operator="IN",
+            ctx_attr="role",
             active=True,
         )
         assert condition.evaluate(ctx={"role": ["admin"]}) is True
@@ -629,37 +629,37 @@ class TestCondition:
 
     def test_condition_evaluate_contains(self) -> None:
         """Test CONTAINS operator"""
-        condition = Condition(ctx_attr="tags", operator="CONTAINS", value=["python"], active=True)
+        condition = Condition(value=["python"], operator="CONTAINS", ctx_attr="tags", active=True)
         assert condition.evaluate(ctx={"tags": "python"}) is True
         assert condition.evaluate(ctx={"tags": "java"}) is False
 
     def test_condition_evaluate_regex(self) -> None:
         """Test REGEX operator"""
-        condition = Condition(ctx_attr="email", operator="REGEX", value=r".*@example\.com$", active=True)
+        condition = Condition(value=r".*@example\.com$", operator="REGEX", ctx_attr="email", active=True)
         assert condition.evaluate(ctx={"email": "user@example.com"}) is True
         assert condition.evaluate(ctx={"email": "user@other.com"}) is False
 
     def test_condition_evaluate_inactive_returns_none(self) -> None:
         """Test that inactive conditions return None"""
-        condition = Condition(ctx_attr="age", operator="EQUALS", value=25, active=False)
+        condition = Condition(value=25, operator="EQUALS", ctx_attr="age", active=False)
         assert condition.evaluate(ctx={"age": 25}) is None
 
     def test_condition_evaluate_missing_operator(self) -> None:
         """Test error handling for missing operator evaluator"""
-        condition = Condition(ctx_attr="age", operator="EQUALS", value=25, active=True)
+        condition = Condition(value=25, operator="EQUALS", ctx_attr="age", active=True)
         condition.operator = "INVALID_OP"  # type: ignore[assignment]
         with pytest.raises(FeatureFlagsEvaluationError, match="not found"):
             condition.evaluate(ctx={"age": 25})
 
     def test_condition_evaluate_context_key_missing(self) -> None:
         """Test error when context attribute is missing"""
-        condition = Condition(ctx_attr="age", operator="EQUALS", value=25, active=True)
+        condition = Condition(value=25, operator="EQUALS", ctx_attr="age", active=True)
         with pytest.raises(FeatureFlagsEvaluationError, match="not found in context"):
             condition.evaluate(ctx={"name": "John"})
 
     def test_condition_evaluate_type_mismatch(self) -> None:
         """Test error when context value type doesn't match operator"""
-        condition = Condition(ctx_attr="age", operator="GREATER_THAN", value=18, active=True)
+        condition = Condition(value=18, operator="GREATER_THAN", ctx_attr="age", active=True)
         with pytest.raises(FeatureFlagsEvaluationError, match="requires comparable"):
             condition.evaluate(ctx={"age": [1, 2, 3]})
 
@@ -667,7 +667,7 @@ class TestCondition:
         """Test condition evaluation with datetime values"""
         now = datetime.now(tz=timezone.utc)
         past = datetime(2020, 1, 1, tzinfo=timezone.utc)
-        condition = Condition(ctx_attr="timestamp", operator="GREATER_THAN", value=now, active=True)
+        condition = Condition(value=now, operator="GREATER_THAN", ctx_attr="timestamp", active=True)
         assert condition.evaluate(ctx={"timestamp": past}) is True
 
 
@@ -682,8 +682,8 @@ class TestRule:
     def test_rule_creation(self) -> None:
         """Test creating a rule with conditions"""
         conditions = [
-            Condition("age", "GREATER_THAN", 18, True),
-            Condition("status", "EQUALS", "active", True),
+            Condition(18, "GREATER_THAN", "age", True),
+            Condition("active", "EQUALS", "status", True),
         ]
         rule = Rule(operator="AND", conditions=conditions, active=True)
         assert rule.operator == "AND"
@@ -693,8 +693,8 @@ class TestRule:
     def test_rule_evaluate_and_all_true(self) -> None:
         """Test AND rule with all conditions True"""
         conditions = [
-            Condition("age", "GREATER_THAN", 25, True),
-            Condition("status", "EQUALS", "active", True),
+            Condition(25, "GREATER_THAN", "age", True),
+            Condition("active", "EQUALS", "status", True),
         ]
         rule = Rule(operator="AND", conditions=conditions, active=True)
         ctx: dict[str, Any] = {"age": 18, "status": "active"}
@@ -703,8 +703,8 @@ class TestRule:
     def test_rule_evaluate_and_one_false(self) -> None:
         """Test AND rule with one condition False"""
         conditions = [
-            Condition("age", "GREATER_THAN", 25, True),
-            Condition("status", "EQUALS", "active", True),
+            Condition(25, "GREATER_THAN", "age", True),
+            Condition("active", "EQUALS", "status", True),
         ]
         rule = Rule(operator="AND", conditions=conditions, active=True)
         ctx: dict[str, Any] = {"age": 18, "status": "inactive"}
@@ -713,8 +713,8 @@ class TestRule:
     def test_rule_evaluate_or_one_true(self) -> None:
         """Test OR rule with one condition True"""
         conditions = [
-            Condition("age", "GREATER_THAN", 25, True),
-            Condition("status", "EQUALS", "active", True),
+            Condition(25, "GREATER_THAN", "age", True),
+            Condition("active", "EQUALS", "status", True),
         ]
         rule = Rule(operator="OR", conditions=conditions, active=True)
         ctx: dict[str, Any] = {"age": 18, "status": "inactive"}
@@ -723,8 +723,8 @@ class TestRule:
     def test_rule_evaluate_or_all_false(self) -> None:
         """Test OR rule with all conditions False"""
         conditions = [
-            Condition("age", "GREATER_THAN", 25, True),
-            Condition("status", "EQUALS", "active", True),
+            Condition(25, "GREATER_THAN", "age", True),
+            Condition("active", "EQUALS", "status", True),
         ]
         rule = Rule(operator="OR", conditions=conditions, active=True)
         ctx: dict[str, Any] = {"age": 30, "status": "inactive"}
@@ -732,7 +732,7 @@ class TestRule:
 
     def test_rule_evaluate_inactive_returns_none(self) -> None:
         """Test that inactive rules return None"""
-        conditions = [Condition("age", "GREATER_THAN", 25, True)]
+        conditions = [Condition(25, "GREATER_THAN", "age", True)]
         rule = Rule(operator="AND", conditions=conditions, active=False)
         assert rule.evaluate(ctx={"age": 18}) is None
 
@@ -745,8 +745,8 @@ class TestRule:
     def test_rule_evaluate_filters_inactive_conditions(self) -> None:
         """Test that inactive conditions are filtered during evaluation"""
         conditions = [
-            Condition("age", "GREATER_THAN", 25, True),
-            Condition("status", "EQUALS", "inactive", False),  # Inactive
+            Condition(25, "GREATER_THAN", "age", True),
+            Condition("inactive", "EQUALS", "status", False),  # Inactive
         ]
         rule = Rule(operator="AND", conditions=conditions, active=True)
         # Should only evaluate active condition
@@ -755,8 +755,8 @@ class TestRule:
     def test_rule_evaluate_all_conditions_inactive_and(self) -> None:
         """Test AND rule behavior when all conditions are inactive"""
         conditions = [
-            Condition("age", "GREATER_THAN", 25, False),
-            Condition("status", "EQUALS", "active", False),
+            Condition(25, "GREATER_THAN", "age", False),
+            Condition("active", "EQUALS", "status", False),
         ]
         rule = Rule(operator="AND", conditions=conditions, active=True)
         # all([]) returns True
@@ -765,8 +765,8 @@ class TestRule:
     def test_rule_evaluate_all_conditions_inactive_or(self) -> None:
         """Test OR rule behavior when all conditions are inactive"""
         conditions = [
-            Condition("age", "GREATER_THAN", 25, False),
-            Condition("status", "EQUALS", "active", False),
+            Condition(25, "GREATER_THAN", "age", False),
+            Condition("active", "EQUALS", "status", False),
         ]
         rule = Rule(operator="OR", conditions=conditions, active=True)
         # any([]) returns False
@@ -781,12 +781,12 @@ class TestRuleGroup:
         rules = [
             Rule(
                 "AND",
-                [Condition("age", "GREATER_THAN", 25, True)],
+                [Condition(25, "GREATER_THAN", "age", True)],
                 True,
             ),
             Rule(
                 "AND",
-                [Condition("status", "EQUALS", "active", True)],
+                [Condition("active", "EQUALS", "status", True)],
                 True,
             ),
         ]
@@ -798,8 +798,8 @@ class TestRuleGroup:
     def test_rule_group_evaluate_and_all_true(self) -> None:
         """Test AND rule group with all rules True"""
         rules = [
-            Rule("AND", [Condition("age", "GREATER_THAN", 25, True)], True),
-            Rule("AND", [Condition("status", "EQUALS", "active", True)], True),
+            Rule("AND", [Condition(25, "GREATER_THAN", "age", True)], True),
+            Rule("AND", [Condition("active", "EQUALS", "status", True)], True),
         ]
         rg = RuleGroup(operator="AND", rules=rules, active=True)
         ctx: dict[str, Any] = {"age": 18, "status": "active"}
@@ -808,15 +808,15 @@ class TestRuleGroup:
     def test_rule_group_evaluate_or_one_true(self) -> None:
         """Test OR rule group with one rule True"""
         rules = [
-            Rule("AND", [Condition("age", "GREATER_THAN", 25, True)], True),
-            Rule("AND", [Condition("age", "LESS_THAN", 10, True)], True),
+            Rule("AND", [Condition(25, "GREATER_THAN", "age", True)], True),
+            Rule("AND", [Condition(10, "LESS_THAN", "age", True)], True),
         ]
         rg = RuleGroup(operator="OR", rules=rules, active=True)
         assert rg.evaluate(ctx={"age": 18}) is True
 
     def test_rule_group_evaluate_inactive_returns_none(self) -> None:
         """Test that inactive rule groups return None"""
-        rules = [Rule("AND", [Condition("age", "GREATER_THAN", 25, True)], True)]
+        rules = [Rule("AND", [Condition(25, "GREATER_THAN", "age", True)], True)]
         rg = RuleGroup(operator="AND", rules=rules, active=False)
         assert rg.evaluate(ctx={"age": 18}) is None
 
@@ -829,8 +829,8 @@ class TestRuleGroup:
     def test_rule_group_filters_inactive_rules(self) -> None:
         """Test that inactive rules are filtered during evaluation"""
         rules = [
-            Rule("AND", [Condition("age", "GREATER_THAN", 25, True)], True),
-            Rule("AND", [Condition("age", "LESS_THAN", 10, True)], False),
+            Rule("AND", [Condition(25, "GREATER_THAN", "age", True)], True),
+            Rule("AND", [Condition(10, "LESS_THAN", "age", True)], False),
         ]
         rg = RuleGroup(operator="AND", rules=rules, active=True)
         assert rg.evaluate(ctx={"age": 18}) is True
@@ -882,12 +882,12 @@ class TestFlag:
         rule_groups = [
             RuleGroup(
                 "AND",
-                [Rule("AND", [Condition("age", "GREATER_THAN", 25, True)], True)],
+                [Rule("AND", [Condition(25, "GREATER_THAN", "age", True)], True)],
                 True,
             ),
             RuleGroup(
                 "AND",
-                [Rule("AND", [Condition("status", "EQUALS", "active", True)], True)],
+                [Rule("AND", [Condition("active", "EQUALS", "status", True)], True)],
                 True,
             ),
         ]
@@ -907,12 +907,12 @@ class TestFlag:
         rule_groups = [
             RuleGroup(
                 "AND",
-                [Rule("AND", [Condition("age", "GREATER_THAN", 25, True)], True)],
+                [Rule("AND", [Condition(25, "GREATER_THAN", "age", True)], True)],
                 True,
             ),
             RuleGroup(
                 "AND",
-                [Rule("AND", [Condition("age", "LESS_THAN", 50, True)], True)],
+                [Rule("AND", [Condition(50, "LESS_THAN", "age", True)], True)],
                 True,
             ),
         ]
@@ -931,12 +931,12 @@ class TestFlag:
         rule_groups = [
             RuleGroup(
                 "AND",
-                [Rule("AND", [Condition("age", "GREATER_THAN", 25, True)], True)],
+                [Rule("AND", [Condition(25, "GREATER_THAN", "age", True)], True)],
                 True,
             ),
             RuleGroup(
                 "AND",
-                [Rule("AND", [Condition("age", "LESS_THAN", 10, True)], True)],
+                [Rule("AND", [Condition(10, "LESS_THAN", "age", True)], True)],
                 True,
             ),
         ]
@@ -955,12 +955,12 @@ class TestFlag:
         rule_groups = [
             RuleGroup(
                 "AND",
-                [Rule("AND", [Condition("age", "LESS_THAN", 100, True)], True)],
+                [Rule("AND", [Condition(100, "LESS_THAN", "age", True)], True)],
                 True,
             ),
             RuleGroup(
                 "AND",
-                [Rule("AND", [Condition("age", "GREATER_THAN", 10, True)], True)],
+                [Rule("AND", [Condition(10, "GREATER_THAN", "age", True)], True)],
                 True,
             ),
         ]
@@ -979,7 +979,7 @@ class TestFlag:
         rule_groups = [
             RuleGroup(
                 "AND",
-                [Rule("AND", [Condition("age", "GREATER_THAN", 25, True)], True)],
+                [Rule("AND", [Condition(25, "GREATER_THAN", "age", True)], True)],
                 True,
             ),
         ]
@@ -1064,7 +1064,7 @@ class TestFeatureFlags:
                     [
                         Rule(
                             "AND",
-                            [Condition("missing", "EQUALS", "value", True)],
+                            [Condition("value", "EQUALS", "missing", True)],
                             True,
                         )
                     ],
@@ -1114,7 +1114,7 @@ class TestFeatureFlags:
         rule_groups = [
             RuleGroup(
                 "AND",
-                [Rule("AND", [Condition("age", "GREATER_THAN", 25, True)], True)],
+                [Rule("AND", [Condition(25, "GREATER_THAN", "age", True)], True)],
                 True,
             )
         ]
@@ -1244,7 +1244,7 @@ class TestFeatureFlags:
             rule_groups=[
                 RuleGroup(
                     "AND",
-                    [Rule("AND", [Condition("user.age", "GREATER_THAN", 18, True)], True)],
+                    [Rule("AND", [Condition(18, "GREATER_THAN", "user.age", True)], True)],
                     True,
                 )
             ],
@@ -1305,7 +1305,7 @@ class TestFeatureFlagsAsync:
         rule_groups = [
             RuleGroup(
                 "AND",
-                [Rule("AND", [Condition("age", "GREATER_THAN", 25, True)], True)],
+                [Rule("AND", [Condition(25, "GREATER_THAN", "age", True)], True)],
                 True,
             )
         ]
@@ -1337,7 +1337,7 @@ class TestFeatureFlagsAsync:
                     [
                         Rule(
                             "AND",
-                            [Condition("missing", "EQUALS", "value", True)],
+                            [Condition("value", "EQUALS", "missing", True)],
                             True,
                         )
                     ],
@@ -1445,7 +1445,7 @@ class TestRuleOperatorEvaluator:
 
     def test_rule_evaluate_missing_operator(self) -> None:
         """Test error handling when rule operator evaluator is not found"""
-        conditions = [Condition("age", "GREATER_THAN", 25, True)]
+        conditions = [Condition(25, "GREATER_THAN", "age", True)]
         rule = Rule(operator="AND", conditions=conditions, active=True)
         rule.operator = "INVALID_OP"  # type: ignore[assignment]
         with pytest.raises(FeatureFlagsEvaluationError, match="not found"):
@@ -1457,7 +1457,7 @@ class TestRuleGroupOperatorEvaluator:
 
     def test_rule_group_evaluate_missing_operator(self) -> None:
         """Test error handling when rule group operator evaluator is not found"""
-        rules = [Rule("AND", [Condition("age", "GREATER_THAN", 25, True)], True)]
+        rules = [Rule("AND", [Condition(25, "GREATER_THAN", "age", True)], True)]
         rg = RuleGroup(operator="AND", rules=rules, active=True)
         rg.operator = "INVALID_OP"  # type: ignore[assignment]
         with pytest.raises(FeatureFlagsEvaluationError, match="not found"):
@@ -1472,7 +1472,7 @@ class TestFlagStrategyEvaluator:
         rule_groups = [
             RuleGroup(
                 "AND",
-                [Rule("AND", [Condition("age", "GREATER_THAN", 25, True)], True)],
+                [Rule("AND", [Condition(25, "GREATER_THAN", "age", True)], True)],
                 True,
             )
         ]
@@ -1494,7 +1494,7 @@ class TestConditionEvaluatorErrors:
 
     def test_condition_evaluate_unexpected_exception(self) -> None:
         """Test error handling for unexpected exceptions during evaluation"""
-        condition = Condition(ctx_attr="age", operator="EQUALS", value=25, active=True)
+        condition = Condition(value=25, operator="EQUALS", ctx_attr="age", active=True)
         condition.operator = "INVALID"  # type: ignore[assignment]
         with pytest.raises(FeatureFlagsEvaluationError, match="not found"):
             condition.evaluate(ctx={"age": 25})
@@ -1503,7 +1503,7 @@ class TestConditionEvaluatorErrors:
         """Test error handling for unexpected runtime exceptions"""
         # Create a condition that will trigger an unexpected error
         # by using a custom evaluator that raises an unexpected exception
-        condition = Condition(ctx_attr="value", operator="EQUALS", value="test", active=True)
+        condition = Condition(value="test", operator="EQUALS", ctx_attr="value", active=True)
 
         def raise_unexpected(*args: Any, **kwargs: Any) -> None:
             msg = "Unexpected error during evaluation"
@@ -1559,15 +1559,15 @@ class TestIntegration:
             RuleGroup(
                 "AND",
                 [
-                    Rule("AND", [Condition("age", "GREATER_THAN", 25, True)], True),
-                    Rule("AND", [Condition("status", "EQUALS", "active", True)], True),
+                    Rule("AND", [Condition(25, "GREATER_THAN", "age", True)], True),
+                    Rule("AND", [Condition("active", "EQUALS", "status", True)], True),
                 ],
                 True,
             ),
             RuleGroup(
                 "OR",
                 [
-                    Rule("AND", [Condition("role", "CONTAINS", ["admin", "superuser"], True)], True),
+                    Rule("AND", [Condition(["admin", "superuser"], "CONTAINS", "role", True)], True),
                 ],
                 True,
             ),
@@ -1606,7 +1606,7 @@ class TestIntegration:
                     [
                         Rule(
                             "AND",
-                            [Condition("beta_tester", "EQUALS", True, True)],
+                            [Condition(True, "EQUALS", "beta_tester", True)],
                             True,
                         )
                     ],

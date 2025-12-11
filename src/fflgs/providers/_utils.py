@@ -8,9 +8,9 @@ logger = logging.getLogger(__name__)
 
 def deserialize_condition(data: dict[str, Any]) -> Condition:
     return Condition(
-        ctx_attr=data["ctx_attr"],
-        operator=data["operator"],
         value=data["value"],
+        operator=data["operator"],
+        ctx_attr=data["ctx_attr"],
         active=data["active"],
     )
 
