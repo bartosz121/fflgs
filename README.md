@@ -24,7 +24,7 @@ flag = Flag(
                 Rule(
                     operator="AND",
                     conditions=[
-                        Condition("user.plan", "IN", ["pro", "enterprise"], active=True)
+                        Condition(["pro", "enterprise"], "CONTAINS", "user.plan", active=True)
                     ],
                     active=True
                 )
@@ -43,6 +43,54 @@ ff = FeatureFlags(provider)
 
 context = {"user": {"plan": "pro"}}
 ff.is_enabled("webhooks", ctx=context)  # True
+```
+
+### YAML Provider with Evaluation Cache
+
+Create a `flags.yaml` file:
+
+```yaml
+- name: webhooks
+  description: Allow webhooks for enterprise users
+  enabled: true
+  version: 1
+  rules_strategy: ALL
+  rule_groups:
+    - operator: AND
+      active: true
+      rules:
+        - operator: AND
+          active: true
+          conditions:
+            - value: ["pro", "enterprise"]
+              operator: CONTAINS
+              ctx_attr: user.plan
+              active: true
+```
+
+Load flags from a YAML file and cache evaluation results:
+
+```python
+from fflgs.providers.yaml import YAMLProvider
+from fflgs.core import FeatureFlags
+from fflgs.cache.memory import InMemoryStorage
+from fflgs.cache import CachedFeatureFlags
+
+# Load flags from YAML file
+provider = YAMLProvider("flags.yaml", cache_ttl_seconds=300)  # Cache file for 5 minutes
+ff = FeatureFlags(provider)
+
+# Wrap with evaluation result caching
+storage = InMemoryStorage()
+cached_ff = CachedFeatureFlags(
+    ff,
+    storage=storage,
+    default_ttl=300,  # 5 minutes
+    ttl_per_flag={"critical_flag": 60}  # Override for specific flags
+)
+
+context = {"user": {"plan": "pro"}}
+result = cached_ff.is_enabled("webhooks", ctx=context)
 ```
 
 ## Architecture
@@ -123,8 +171,8 @@ context = {
     "request": {"ip": "192.168.1.1"}
 }
 
-Condition("user.profile.role", "EQUALS", "admin", active=True)
-Condition("request.ip", "REGEX", r"192\.168\..*", active=True)
+Condition("admin", "EQUALS", "user.profile.role", active=True)
+Condition(r"192\.168\..*", "REGEX", "request.ip", active=True)
 ```
 
 ## Providers
@@ -140,8 +188,7 @@ from fflgs.providers.json import JSONProvider
 
 provider = JSONProvider(
     "flags.json",
-    cache_enabled=True,  # Cache file contents (default)
-    cache_ttl_seconds=None,  # Cache indefinitely
+    cache_ttl_seconds=None,  # Cache indefinitely (default)
 )
 
 ff = FeatureFlags(provider)
@@ -151,7 +198,7 @@ Disable file caching or set TTL:
 
 ```python
 # Reload from file every call
-provider = JSONProvider("flags.json", cache_enabled=False)
+provider = JSONProvider("flags.json", cache_ttl_seconds=0)
 
 # Reload after 60 seconds
 provider = JSONProvider("flags.json", cache_ttl_seconds=60)
@@ -166,8 +213,7 @@ from fflgs.providers.yaml import YAMLProvider
 
 provider = YAMLProvider(
     "flags.yaml",
-    cache_enabled=True,
-    cache_ttl_seconds=None,
+    cache_ttl_seconds=None,  # Cache indefinitely (default)
 )
 
 ff = FeatureFlags(provider)
@@ -202,7 +248,7 @@ Wrap your `FeatureFlags` instance to cache evaluation results:
 
 ```python
 from fflgs.cache.memory import InMemoryStorage
-from fflgs.cache.wrapper import CachedFeatureFlags
+from fflgs.cache import CachedFeatureFlags
 
 provider = InMemoryProvider()
 ff = FeatureFlags(provider)
@@ -233,7 +279,7 @@ cached_ff.clear_cache(cache_key=key)
 Async version:
 
 ```python
-from fflgs.cache.wrapper import CachedFeatureFlagsAsync
+from fflgs.cache import CachedFeatureFlagsAsync
 
 cached_ff = CachedFeatureFlagsAsync(ff_async, storage=storage, default_ttl=300)
 result = await cached_ff.is_enabled("webhooks", ctx=context)
@@ -332,23 +378,23 @@ For detailed development setup, running tests, code quality checks, and contribu
 Rule(
     operator="AND",
     conditions=[
-        Condition("user.age", "GREATER_THAN", 21, True),
-        Condition("user.region", "IN", ["US", "CA"], True),
+        Condition(21, "GREATER_THAN", "user.age", True),
+        Condition(["US", "CA"], "IN", "user.region", True),
     ],
     active=True
 )
 ```
 
 ```python
-Condition("user.id", "REGEX", r"^[0-4]", True)
+Condition(r"^[0-4]", "REGEX", "user.id", True)
 ```
 
 ```python
 RuleGroup(
     operator="OR",
     rules=[
-        Rule(operator="AND", conditions=[Condition("user.beta", "EQUALS", True, True)], active=True),
-        Rule(operator="AND", conditions=[Condition("user.role", "EQUALS", "admin", True)], active=True),
+        Rule(operator="AND", conditions=[Condition(True, "EQUALS", "user.beta", True)], active=True),
+        Rule(operator="AND", conditions=[Condition("admin", "EQUALS", "user.role", True)], active=True),
     ],
     active=True
 )
