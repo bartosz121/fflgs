@@ -17,7 +17,7 @@ class InMemoryProvider:
 
 
 class InMemoryProviderAsync:
-    """In-memory implementation of FeatureFlagsProviderAsync for testing"""
+    """In-memory implementation of FeatureFlagsProviderAsync"""
 
     _flags: dict[str, Flag]
 

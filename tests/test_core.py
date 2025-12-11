@@ -1,4 +1,5 @@
 # pyright: reportPrivateUsage=false
+# ruff: noqa: PLC2701
 
 from dataclasses import dataclass
 from datetime import date, datetime, time, timezone
@@ -7,6 +8,8 @@ from unittest import mock
 
 import pytest
 
+# from hypothesis import given
+# from hypothesis import strategies as st
 from fflgs.core import (
     Condition,
     ConditionOperator,
@@ -223,6 +226,290 @@ class TestValidationFunctions:
         """Test context value validation fails for invalid combinations"""
         with pytest.raises(TypeError, match=error_msg):
             _validate_context_value_with_operator(operator, ctx_value)
+
+
+# # Hypothesis tests
+
+
+# def comparable_values() -> st.SearchStrategy[Any]:
+#     """Generate comparable values (str, int, float, bool, datetime, date, time)"""
+#     return st.one_of(
+#         st.text(),
+#         st.integers(),
+#         st.floats(allow_nan=False, allow_infinity=False),
+#         st.booleans(),
+#         st.datetimes(timezones=st.just(timezone.utc)),
+#         st.dates(),
+#         st.times(),
+#     )
+
+
+# def non_comparable_values() -> st.SearchStrategy[Any]:
+#     """Generate non-comparable values (lists, dicts, sets, None, objects)"""
+#     return st.one_of(
+#         st.lists(st.integers()),
+#         st.dictionaries(st.text(), st.integers()),
+#         st.sets(st.integers()),
+#         st.just(None),
+#         st.just(object()),
+#     )
+
+
+# def container_values() -> st.SearchStrategy[Any]:
+#     """Generate container values (list, dict, set, str, tuple)"""
+#     return st.one_of(
+#         st.lists(st.integers()),
+#         st.dictionaries(st.text(), st.integers()),
+#         st.sets(st.integers()),
+#         st.text(),
+#         st.tuples(st.integers(), st.integers()),
+#     )
+
+
+# def non_container_values() -> st.SearchStrategy[Any]:
+#     """Generate non-container values (int, float, bool, datetime, None)"""
+#     return st.one_of(
+#         st.integers(),
+#         st.floats(allow_nan=False, allow_infinity=False),
+#         st.booleans(),
+#         st.datetimes(timezones=st.just(timezone.utc)),
+#         st.just(None),
+#     )
+
+
+# class TestEvaluatorsWithHypothesis:
+#     """Property-based tests for evaluator functions using hypothesis"""
+
+#     @given(comparable_values())
+#     def test_evaluator_eq_reflexivity(self, val: Any) -> None:
+#         """Property: Equality is reflexive (a == a for all a)"""
+#         assert _evaluator_eq(val, val) is True
+
+#     @given(comparable_values(), comparable_values())
+#     def test_evaluator_ne_complementary_to_eq(self, a: Any, b: Any) -> None:
+#         """Property: NOT_EQUALS is logical complement of EQUALS"""
+#         eq_result = _evaluator_eq(a, b)
+#         ne_result = _evaluator_ne(a, b)
+#         assert ne_result is not eq_result
+
+#     @given(comparable_values(), comparable_values())
+#     def test_evaluator_gt_antisymmetric(self, a: Any, b: Any) -> None:
+#         """Property: If a > b then NOT b > a"""
+#         if a == b:
+#             # Skip equal values
+#             return
+#         try:
+#             if _evaluator_gt(a, b):
+#                 assert not _evaluator_gt(b, a)
+#         except TypeError:
+#             # Mixed types that can't be compared are OK
+#             pass
+
+#     @given(comparable_values(), comparable_values())
+#     def test_evaluator_ge_reflexive(self, a: Any, b: Any) -> None:
+#         """Property: a >= a for all a"""
+#         # This is automatically satisfied but test the general property
+#         assert _evaluator_ge(a, a) is True
+
+#     @given(comparable_values(), comparable_values())
+#     def test_evaluator_lt_and_gt_inverse(self, a: Any, b: Any) -> None:
+#         """Property: If a < b then b > a (for comparable types)"""
+#         if a == b:
+#             return
+#         try:
+#             lt_result = _evaluator_lt(a, b)
+#             gt_result = _evaluator_gt(b, a)
+#             assert lt_result is gt_result
+#         except TypeError:
+#             # Mixed types that can't be compared are OK
+#             pass
+
+#     @given(comparable_values(), comparable_values())
+#     def test_evaluator_le_and_ge_inverse(self, a: Any, b: Any) -> None:
+#         """Property: If a <= b then b >= a"""
+#         try:
+#             le_result = _evaluator_le(a, b)
+#             ge_result = _evaluator_ge(b, a)
+#             assert le_result is ge_result
+#         except TypeError:
+#             # Mixed types that can't be compared are OK
+#             pass
+
+#     @given(container_values(), st.data())
+#     def test_evaluator_in_and_contains_inverse(self, container: Any, data: st.DataObject) -> None:
+#         """Property: item IN container <==> container CONTAINS item"""
+#         # Generate an item that could be in the container
+#         if isinstance(container, str):
+#             item = data.draw(st.text(max_size=1))
+#         elif isinstance(container, (list, tuple)):
+#             item = data.draw(st.integers())
+#         elif isinstance(container, dict):
+#             if not container:  # Empty dict
+#                 return
+#             item = data.draw(st.sampled_from(list(container.keys())) | st.text())
+#         elif isinstance(container, set):
+#             item = data.draw(st.integers())
+#         else:
+#             return
+
+#         try:
+#             in_result = _evaluator_in(item, container)
+#             contains_result = _evaluator_contains(container, item)
+#             assert in_result is contains_result
+#         except (TypeError, KeyError, ValueError):
+#             # Some container/item combinations may raise, that's fine
+#             pass
+
+#     @given(container_values(), st.data())
+#     def test_evaluator_not_in_and_not_contains_inverse(self, container: Any, data: st.DataObject) -> None:
+#         """Property: NOT_IN is inverse of IN, NOT_CONTAINS is inverse of CONTAINS"""
+#         if isinstance(container, str):
+#             item = data.draw(st.text(max_size=1))
+#         elif isinstance(container, (list, tuple)):
+#             item = data.draw(st.integers())
+#         elif isinstance(container, dict):
+#             if not container:  # Empty dict
+#                 return
+#             item = data.draw(st.sampled_from(list(container.keys())) | st.text())
+#         elif isinstance(container, set):
+#             item = data.draw(st.integers())
+#         else:
+#             return
+
+#         try:
+#             not_in_result = _evaluator_not_in(item, container)
+#             in_result = _evaluator_in(item, container)
+#             assert not_in_result is not in_result
+
+#             not_contains_result = _evaluator_not_contains(container, item)
+#             contains_result = _evaluator_contains(container, item)
+#             assert not_contains_result is not contains_result
+#         except (TypeError, KeyError, ValueError):
+#             pass
+
+#     @given(st.text(min_size=1))
+#     def test_evaluator_regex_always_returns_bool(self, text: str) -> None:
+#         """Property: Regex evaluator always returns a boolean"""
+#         # Use a simple pattern that won't error
+#         result = _evaluator_regex(r".*", text)
+#         assert isinstance(result, bool)
+
+#     @given(st.text())
+#     def test_evaluator_regex_dot_star_matches_all(self, text: str) -> None:
+#         """Property: Pattern '.*' matches all strings"""
+#         result = _evaluator_regex(r".*", text)
+#         assert result is True
+
+#     @given(st.text())
+#     def test_evaluator_regex_impossible_pattern_never_matches(self, text: str) -> None:
+#         """Property: Impossible pattern '^$abc' never matches non-empty strings"""
+#         if text:  # Only test with non-empty strings
+#             result = _evaluator_regex(r"^$abc", text)
+#             assert result is False
+
+
+# class TestTypeGuardsWithHypothesis:
+#     """Property-based tests for type guard functions"""
+
+#     @given(comparable_values())
+#     def test_is_comparable_condition_returns_true_for_comparable(self, val: Any) -> None:
+#         """Property: All comparable types are recognized as comparable"""
+#         assert _is_comparable_condition(val) is True
+
+#     @given(non_comparable_values())
+#     def test_is_comparable_condition_returns_false_for_non_comparable(self, val: Any) -> None:
+#         """Property: Non-comparable types are rejected"""
+#         assert _is_comparable_condition(val) is False
+
+#     @given(container_values())
+#     def test_is_container_returns_true_for_containers(self, val: Any) -> None:
+#         """Property: All container types are recognized as containers"""
+#         assert _is_container(val) is True
+
+#     @given(non_container_values())
+#     def test_is_container_returns_false_for_non_containers(self, val: Any) -> None:
+#         """Property: Non-container types are rejected"""
+#         assert _is_container(val) is False
+
+
+# class TestValidationWithHypothesis:
+#     """Property-based tests for validation functions"""
+
+#     @given(comparable_values())
+#     def test_comparable_values_pass_comparison_operators(self, val: Any) -> None:
+#         """Property: All comparable values pass validation for comparison operators"""
+#         for op in ["GREATER_THAN", "GREATER_THAN_OR_EQUALS", "LESS_THAN", "LESS_THAN_OR_EQUALS"]:
+#             # Should not raise
+#             _validate_condition_value_with_operator(op, val)  # type: ignore[arg-type]
+
+#     @given(non_comparable_values())
+#     def test_non_comparable_values_fail_comparison_operators(self, val: Any) -> None:
+#         """Property: Non-comparable values fail validation for comparison operators"""
+#         for op in ["GREATER_THAN", "GREATER_THAN_OR_EQUALS", "LESS_THAN", "LESS_THAN_OR_EQUALS"]:
+#             with pytest.raises(ValueError, match="requires comparable value"):
+#                 _validate_condition_value_with_operator(op, val)  # type: ignore[arg-type]
+
+#     @given(container_values())
+#     def test_container_values_pass_contains_operators(self, val: Any) -> None:
+#         """Property: All containers pass validation for CONTAINS/NOT_CONTAINS"""
+#         for op in ["CONTAINS", "NOT_CONTAINS"]:
+#             # Should not raise
+#             _validate_condition_value_with_operator(op, val)  # type: ignore[arg-type]
+
+#     @given(non_container_values())
+#     def test_non_container_values_fail_contains_operators(self, val: Any) -> None:
+#         """Property: Non-containers fail validation for CONTAINS/NOT_CONTAINS"""
+#         for op in ["CONTAINS", "NOT_CONTAINS"]:
+#             with pytest.raises(ValueError, match="requires container value"):
+#                 _validate_condition_value_with_operator(op, val)  # type: ignore[arg-type]
+
+#     @given(st.text())
+#     def test_string_values_pass_regex_operator(self, val: str) -> None:
+#         """Property: String values pass validation for REGEX operator"""
+#         _validate_condition_value_with_operator("REGEX", val)
+
+#     @given(non_comparable_values().filter(lambda x: not isinstance(x, str)))
+#     def test_non_string_values_fail_regex_operator(self, val: Any) -> None:
+#         """Property: Non-string values fail validation for REGEX operator"""
+#         with pytest.raises(ValueError, match="requires str value"):
+#             _validate_condition_value_with_operator("REGEX", val)
+
+#     @given(comparable_values())
+#     def test_comparable_context_passes_comparison_operators(self, val: Any) -> None:
+#         """Property: Comparable context values pass validation for comparison operators"""
+#         for op in ["GREATER_THAN", "GREATER_THAN_OR_EQUALS", "LESS_THAN", "LESS_THAN_OR_EQUALS"]:
+#             _validate_context_value_with_operator(op, val)  # type: ignore[arg-type]
+
+#     @given(non_comparable_values())
+#     def test_non_comparable_context_fails_comparison_operators(self, val: Any) -> None:
+#         """Property: Non-comparable context values fail validation for comparison operators"""
+#         for op in ["GREATER_THAN", "GREATER_THAN_OR_EQUALS", "LESS_THAN", "LESS_THAN_OR_EQUALS"]:
+#             with pytest.raises(TypeError, match="requires comparable context value"):
+#                 _validate_context_value_with_operator(op, val)  # type: ignore[arg-type]
+
+#     @given(container_values())
+#     def test_container_context_passes_in_operators(self, val: Any) -> None:
+#         """Property: Container context values pass validation for IN/NOT_IN operators"""
+#         for op in ["IN", "NOT_IN"]:
+#             _validate_context_value_with_operator(op, val)  # type: ignore[arg-type]
+
+#     @given(non_container_values())
+#     def test_non_container_context_fails_in_operators(self, val: Any) -> None:
+#         """Property: Non-container context values fail validation for IN/NOT_IN operators"""
+#         for op in ["IN", "NOT_IN"]:
+#             with pytest.raises(TypeError, match="requires container context value"):
+#                 _validate_context_value_with_operator(op, val)  # type: ignore[arg-type]
+
+#     @given(st.text())
+#     def test_string_context_passes_regex_operator(self, val: str) -> None:
+#         """Property: String context values pass validation for REGEX operator"""
+#         _validate_context_value_with_operator("REGEX", val)
+
+#     @given(non_comparable_values().filter(lambda x: not isinstance(x, str)))
+#     def test_non_string_context_fails_regex_operator(self, val: Any) -> None:
+#         """Property: Non-string context values fail validation for REGEX operator"""
+#         with pytest.raises(TypeError, match="requires string context value"):
+#             _validate_context_value_with_operator("REGEX", val)
 
 
 class TestGetValueFromContext:

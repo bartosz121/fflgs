@@ -32,6 +32,9 @@ classifiers = [
 dynamic = ["version"]
 dependencies = []
 
+[project.optional-dependencies]
+yaml =["PyYAML>=6,<7"]
+
 [project.urls]
 Documentation = "https://github.com/bartosz121/fflgs"
 Source = "https://github.com/bartosz121/fflgs"
@@ -196,7 +199,7 @@ ban-relative-imports = "all"
 # Allow print/pprint
 "examples/*" = ["T201"]
 # Tests can use magic values, assertions, and relative imports
-"tests/**/*" = [
+"tests/**" = [
     "PLR2004",
     "S101",
     "TID252",
@@ -226,11 +229,12 @@ dependencies = [
     "pytest-recording",
     "pytest-sugar",
     "hypothesis",
+    "types-PyYAML>=6,<7"
 ]
 
 [tool.hatch.envs.default.scripts]
-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src/fflgs --cov=tests {args}"
-cov-cicd = "pytest --cov --cov-branch --cov-report=xml --cov-config=pyproject.toml --cov=src/fflgs --cov=tests {args}"
+cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=src/fflgs {args}"
+cov-cicd = "pytest --cov --cov-branch --cov-report=xml --cov-config=pyproject.toml --cov=src/fflgs {args}"
 no-cov = "cov --no-cov {args}"
 typecheck = [
     "echo \"VERSION: `pyright --version`\"",
