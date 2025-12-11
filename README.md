@@ -9,7 +9,7 @@ Existing Python feature flag libraries fall into two categories: they're either 
 ## Quick Start
 
 ```python
-from fflgs.core import Condition, Rule, RuleGroup, Flag, FeatureFlags
+from fflgs.core import Condition, FeatureFlags, Flag, Rule, RuleGroup
 from fflgs.providers.memory import InMemoryProvider
 
 # Build your flag
@@ -24,23 +24,26 @@ flag = Flag(
                 Rule(
                     operator="AND",
                     conditions=[
-                        Condition(["pro", "enterprise"], "CONTAINS", "user.plan", active=True)
+                        Condition(
+                            ["pro", "enterprise"], "CONTAINS", "user.plan", active=True
+                        )
                     ],
-                    active=True
+                    active=True,
                 )
             ],
-            active=True
+            active=True,
         )
     ],
     enabled=True,
-    version=1
+    version=1,
 )
 
-# Evaluate
+# Create flag provider and `FeatureFlags` instance
 provider = InMemoryProvider()
 provider.add_flag(flag)
 ff = FeatureFlags(provider)
 
+# Evaluate
 context = {"user": {"plan": "pro"}}
 ff.is_enabled("webhooks", ctx=context)  # True
 ```
@@ -71,10 +74,10 @@ Create a `flags.yaml` file:
 Load flags from a YAML file and cache evaluation results:
 
 ```python
-from fflgs.providers.yaml import YAMLProvider
-from fflgs.core import FeatureFlags
-from fflgs.cache.memory import InMemoryStorage
 from fflgs.cache import CachedFeatureFlags
+from fflgs.cache.memory import InMemoryStorage
+from fflgs.core import FeatureFlags
+from fflgs.providers.yaml import YAMLProvider
 
 # Load flags from YAML file
 provider = YAMLProvider("flags.yaml", cache_ttl_seconds=300)  # Cache file for 5 minutes
@@ -86,7 +89,7 @@ cached_ff = CachedFeatureFlags(
     ff,
     storage=storage,
     default_ttl=300,  # 5 minutes
-    ttl_per_flag={"critical_flag": 60}  # Override for specific flags
+    ttl_per_flag={"critical_flag": 60},  # Override for specific flags
 )
 
 context = {"user": {"plan": "pro"}}
