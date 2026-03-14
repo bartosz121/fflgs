@@ -136,7 +136,7 @@ This often provides additional considerations and avoids unnecessary work.
         to look for recurring communication patterns.
 
 5. Please check that your changes don't break any tests with
-   `hatch run test` or `hatch run cov-cicd` to run the tests with coverage reports.
+   `hatch test -p` or `hatch run cov-cicd` to run the tests with coverage reports.
 
 ### Submit your contribution
 
