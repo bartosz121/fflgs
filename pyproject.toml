@@ -293,7 +293,7 @@ build-check = [
 
 [tool.hatch.envs.hatch-test]
 template = 'default'
-dependencies = [
+extra-dependencies = [
     "pytest-asyncio",
 ]
 

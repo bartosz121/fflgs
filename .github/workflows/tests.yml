@@ -41,4 +41,4 @@ jobs:
           hatch run typecheck
       - name: Run Tests
         run: |
-          hatch run cov
+          hatch test --cover -p
