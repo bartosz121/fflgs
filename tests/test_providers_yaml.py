@@ -1,14 +1,22 @@
 import tempfile
+from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
 import pytest
-import yaml
 
 from fflgs.core import Condition, FeatureFlagsProviderError, Flag, Rule, RuleGroup
+from fflgs.providers import yaml as yaml_provider_module
 from fflgs.providers.yaml import YAMLProvider, YAMLProviderAsync
 from tests.test_provider_contract import ProviderContractTests, ProviderContractTestsAsync
 from tests.test_providers_file_based_provider import FileProviderContractTests
+
+HAS_PYYAML = find_spec("yaml") is not None
+
+
+def _yaml_module() -> Any:
+    """Import PyYAML or skip YAML-specific tests when it is unavailable."""
+    return pytest.importorskip("yaml")
 
 
 @pytest.fixture
@@ -73,7 +81,7 @@ def yaml_file_with_simple_flag(simple_flag: Flag):
     }
 
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False, encoding="utf-8") as f:
-        yaml.dump([flag_data], f)
+        _yaml_module().dump([flag_data], f)
         f.flush()
         path = f.name
         yield path
@@ -122,6 +130,7 @@ def sample_flags_yaml() -> list[dict[str, Any]]:
     ]
 
 
+@pytest.mark.skipif(not HAS_PYYAML, reason="PyYAML is not installed")
 class TestYAMLProviderFileContract(FileProviderContractTests):
     """File-based contract tests for YAMLProvider."""
 
@@ -136,11 +145,12 @@ class TestYAMLProviderFileContract(FileProviderContractTests):
     def file_with_flags(self, sample_flags_yaml: list[dict[str, Any]]):
         """Create a temporary YAML file with sample flags."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False, encoding="utf-8") as f:
-            yaml.dump(sample_flags_yaml, f)
+            _yaml_module().dump(sample_flags_yaml, f)
             f.flush()
             yield f.name
 
 
+@pytest.mark.skipif(not HAS_PYYAML, reason="PyYAML is not installed")
 class TestYAMLProviderContract(ProviderContractTests):
     """Contract tests for YAMLProvider."""
 
@@ -155,6 +165,7 @@ class TestYAMLProviderContract(ProviderContractTests):
         return "test_flag"
 
 
+@pytest.mark.skipif(not HAS_PYYAML, reason="PyYAML is not installed")
 class TestYAMLProviderAsyncContract(ProviderContractTestsAsync):
     """Contract tests for YAMLProviderAsync."""
 
@@ -169,6 +180,7 @@ class TestYAMLProviderAsyncContract(ProviderContractTestsAsync):
         return "test_flag"
 
 
+@pytest.mark.skipif(not HAS_PYYAML, reason="PyYAML is not installed")
 class TestYAMLProviderFormatSpecific:
     """Format-specific tests for YAMLProvider."""
 
@@ -243,3 +255,40 @@ class TestYAMLProviderFormatSpecific:
             provider = YAMLProviderAsync(path)
             with pytest.raises(FeatureFlagsProviderError, match="Invalid YAML"):
                 await provider.get_flag("any_flag")
+
+
+class TestYAMLProviderOptionalDependency:
+    """Tests for YAML providers when PyYAML is not installed."""
+
+    def test_requires_pyyaml(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+        monkeypatch.setattr(yaml_provider_module, "yaml", None)
+        monkeypatch.setattr(
+            yaml_provider_module,
+            "_yaml_import_error",
+            ModuleNotFoundError("No module named 'yaml'"),
+        )
+
+        file_path = tmp_path / "flags.yaml"
+        file_path.write_text("[]", encoding="utf-8")
+
+        provider = yaml_provider_module.YAMLProvider(str(file_path))
+
+        with pytest.raises(FeatureFlagsProviderError, match="PyYAML is required"):
+            provider.get_flag("test_flag")
+
+    @pytest.mark.asyncio
+    async def test_requires_pyyaml_async(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+        monkeypatch.setattr(yaml_provider_module, "yaml", None)
+        monkeypatch.setattr(
+            yaml_provider_module,
+            "_yaml_import_error",
+            ModuleNotFoundError("No module named 'yaml'"),
+        )
+
+        file_path = tmp_path / "flags.yaml"
+        file_path.write_text("[]", encoding="utf-8")
+
+        provider = yaml_provider_module.YAMLProviderAsync(str(file_path))
+
+        with pytest.raises(FeatureFlagsProviderError, match="PyYAML is required"):
+            await provider.get_flag("test_flag")
