@@ -1,12 +1,18 @@
 import logging
 from typing import Any
 
-import yaml
-
 from fflgs.core import FeatureFlagsProviderError, Flag
 from fflgs.providers._file_provider import FileProvider
 
 logger = logging.getLogger(__name__)
+
+try:
+    import yaml
+except ModuleNotFoundError as exc:
+    yaml = None
+    _yaml_import_error = exc
+else:
+    _yaml_import_error = None
 
 
 class _YAMLProvider(FileProvider):
@@ -21,6 +27,10 @@ class _YAMLProvider(FileProvider):
         Raises:
             ValueError: If YAML is invalid
         """
+        if yaml is None:
+            msg = "PyYAML is required to use YAML providers. Install it with `pip install fflgs[yaml]`."
+            raise ImportError(msg) from _yaml_import_error
+
         try:
             with open(self._file_path, encoding="utf-8") as f:
                 return yaml.safe_load(f)
